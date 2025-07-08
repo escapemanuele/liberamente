@@ -60,23 +60,27 @@ Backend Implementation Checklist — MVP "BrainDump" (updated for Resend emails)
 ☐ Enable Sentry (or Vercel monitoring) in Edge Functions via DSN env var  
 ☐ Set usage alerts in Supabase (database rows, outbound traffic thresholds)  
 
-10 Local & CI Testing  
+10 Wire the frontend with the backend
+☐ Make sure the user is able to login and signup
+☐ Set up frontend form to submit dumps to brain_dumps
+☐ Make sure the edge functions are able to prompt to GPT-4o to generate insights and categorized to-dos
+☐ Implement logic to restrict Free users to 1 dump per day
+
+11 Local & CI Testing  
 ☐ Write Playwright script: sign-up → create dump → wait for ai_outputs → mark todo complete → mock cron → assert weekly email API hit  
 ☐ GitHub Actions matrix: run Playwright on every PR with `supabase start` service  
 ☐ Add `npm run lint && npm run test:e2e` as required status checks  
 
-11 Deployment  
+12 Deployment  
 ☐ Deploy Edge Functions: `supabase functions deploy --project-ref {ref}`  
 ☐ Add Vercel env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, STRIPE_PUBLIC_KEY, RESEND_API_KEY, REVIEW_FROM_EMAIL  
 ☐ Deploy Next.js frontend (`vercel --prod`)  
 ☐ Run post-deploy smoke test hitting production URLs  
 
-12 Launch Prep  
+13 Launch Prep  
 ☐ Configure custom domain for Supabase Auth emails  
 ☐ Upload brand email templates (login, reset PW)  
 ☐ Set Supabase spend cap and daily usage notifications  
 ☐ Publish Privacy Policy & TOS; link from app footer  
 ☐ Enable Stripe tax rates and set default statement descriptor  
-
-────────────────────────────────────────  
-This revision adds Resend-powered weekly emails without disrupting the existing flow—just tick the new boxes. 
+ 
