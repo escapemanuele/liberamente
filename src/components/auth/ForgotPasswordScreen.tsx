@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Brain, ArrowRight, Mail, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ForgotPasswordScreen = () => {
+  const { resetPassword } = useAuth();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
@@ -26,12 +29,23 @@ const ForgotPasswordScreen = () => {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateEmail()) {
-      // Handle forgot password logic here
-      console.log('Forgot password request for:', email);
-      setIsSubmitted(true);
+    if (!validateEmail()) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { error: resetError } = await resetPassword(email);
+      
+      if (resetError) {
+        setError(resetError.message);
+      } else {
+        setIsSubmitted(true);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -150,11 +164,12 @@ const ForgotPasswordScreen = () => {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
+              disabled={isLoading}
+              className={`w-full ${isLoading ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'} text-white py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl`}
             >
               <Mail className="w-5 h-5" />
-              <span>Send Reset Link</span>
-              <ArrowRight className="w-5 h-5" />
+              <span>{isLoading ? 'Sending...' : 'Send Reset Link'}</span>
+              {!isLoading && <ArrowRight className="w-5 h-5" />}
             </button>
           </form>
         </div>

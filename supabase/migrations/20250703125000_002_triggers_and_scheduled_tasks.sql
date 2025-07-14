@@ -42,6 +42,12 @@ begin
     dumps_total       = uc.dumps_total + 1,
     dumps_this_month  = uc.dumps_this_month + 1,
     updated_at        = now();
+
+  -- decrement remaining monthly quota for free users
+  update profiles
+     set quota_remaining = greatest(quota_remaining - 1, 0)
+   where id = NEW.user_id
+     and is_premium = false;
   return NULL;
 end;
 $$;

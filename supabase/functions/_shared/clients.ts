@@ -11,11 +11,6 @@ export const supabase = createClient(
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 
-console.log ('AAAA')
-
-console.log(Deno.env.get('OPENAI_API_KEY'))
-
-
 export const openai  = new OpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY') })
 // export const stripe  = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2023-10-16' })
 // export const resend  = new Resend(Deno.env.get('RESEND_API_KEY')!)

@@ -1,20 +1,19 @@
 import { useState } from 'react';
 import { Brain, User, LogOut, ChevronDown, Mail } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Header = () => {
-  const location = useLocation();
   const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  const isLoggedIn = location.pathname.startsWith('/dashboard') ||
-    location.pathname.startsWith('/brain-dump') ||
-    location.pathname.startsWith('/weekly-review') ||
-    location.pathname.startsWith('/profile');
+  const isLoggedIn = !!user;
 
-  const user = {
-    name: 'John Doe',
-    email: 'john.doe@example.com'
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+    setShowProfileMenu(false);
   };
 
   return (
@@ -53,9 +52,9 @@ const Header = () => {
                 className="flex items-center space-x-3 bg-orange-100 hover:bg-orange-200 px-4 py-2 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
               >
                 <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {user.name.charAt(0)}
+                  {(profile?.full_name || user?.email || 'U').charAt(0).toUpperCase()}
                 </div>
-                <span className="font-medium text-gray-800 hidden sm:block">{user.name}</span>
+                <span className="font-medium text-gray-800 hidden sm:block">{profile?.full_name || user?.email}</span>
                 <ChevronDown className="w-4 h-4 text-gray-600" />
               </button>
 
@@ -64,13 +63,13 @@ const Header = () => {
                   {/* User details */}
                   <div className="px-4 py-4 flex items-center space-x-3">
                     <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {user.name.charAt(0)}
+                      {(profile?.full_name || user?.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{user.name}</p>
+                      <p className="font-medium text-gray-900">{profile?.full_name || user?.email}</p>
                       <p className="text-sm text-gray-600 flex items-center space-x-1">
                         <Mail className="w-3 h-3" />
-                        <span>{user.email}</span>
+                        <span>{user?.email}</span>
                       </p>
                     </div>
                   </div>
@@ -84,6 +83,7 @@ const Header = () => {
                   </button>
                   <hr className="my-1 border-gray-100" />
                   <button
+                    onClick={handleLogout}
                     className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center space-x-3 transition-colors duration-200 text-red-600"
                   >
                     <LogOut className="w-4 h-4" />

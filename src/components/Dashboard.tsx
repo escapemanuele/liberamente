@@ -1,53 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Brain, Plus, Eye, Edit, Trash2, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { createBrainDump, fetchBrainDumps } from '../lib/braindumps';
+import { BrainDump } from '../lib/supabase';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const [newDump, setNewDump] = useState('');
+  const [canDump, setCanDump] = useState(true);
+  const [todaysDumps, setTodaysDumps] = useState<BrainDump[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Mock data for today's brain dumps
-  const [todaysDumps] = useState([
-    {
-      id: 1,
-      content: "Remember to follow up with the client about the project timeline. They mentioned wanting to see mockups by Friday...",
-      timestamp: "10:30 AM",
-      fullContent: "Remember to follow up with the client about the project timeline. They mentioned wanting to see mockups by Friday and we need to align on the final deliverables."
-    },
-    {
-      id: 2,
-      content: "Idea: What if we created a mobile app that helps people track their daily water intake with gamification...",
-      timestamp: "2:15 PM",
-      fullContent: "Idea: What if we created a mobile app that helps people track their daily water intake with gamification elements? Users could earn points, unlock achievements, and compete with friends."
-    },
-    {
-      id: 3,
-      content: "Need to research React performance optimization techniques for the upcoming sprint...",
-      timestamp: "4:45 PM",
-      fullContent: "Need to research React performance optimization techniques for the upcoming sprint. Focus on memo, useMemo, useCallback, and code splitting strategies."
+  useEffect(() => {
+    if (user && profile) {
+      // Check quota
+      setCanDump(profile.is_premium || profile.quota_remaining > 0);
+      
+      // Fetch brain dumps
+      fetchBrainDumps(10).then(({ data, error }) => {
+        if (error) {
+          console.error('Error fetching brain dumps:', error);
+        } else {
+          setTodaysDumps(data || []);
+        }
+        setIsLoading(false);
+      });
     }
-  ]);
+  }, [user, profile]);
 
-  const handleSubmitDump = (e: React.FormEvent) => {
+  const handleSubmitDump = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newDump.trim()) {
-      // Handle submission logic here
-      console.log('New brain dump:', newDump);
-      setNewDump('');
+    if (!newDump.trim() || !canDump) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await createBrainDump({ content: newDump.trim() });
+      
+      if (error) {
+        console.error('Error creating brain dump:', error);
+        // TODO: Show error message to user
+      } else if (data) {
+        // Add new dump to the list
+        setTodaysDumps(prev => [data, ...prev]);
+        setNewDump('');
+        
+        // Update quota if not premium
+        if (profile && !profile.is_premium) {
+          // Note: The backend trigger handles quota decrement
+          setCanDump(profile.quota_remaining > 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error creating brain dump:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDeleteDump = (id: number) => {
-    // Handle delete logic here
+  const handleDeleteDump = (id: string) => {
+    // TODO: Implement delete functionality
     console.log('Delete dump:', id);
   };
 
-  const handleEditDump = (id: number) => {
+  const handleEditDump = (id: string) => {
     navigate(`/brain-dump/${id}/edit`);
   };
 
-  const handleViewDetails = (id: number) => {
+  const handleViewDetails = (id: string) => {
     navigate(`/brain-dump/${id}`);
+  };
+
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
   };
 
   return (
@@ -79,11 +112,12 @@ const Dashboard = () => {
             />
             <button
               type="submit"
-              disabled={!newDump.trim()}
-              className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-8 rounded-xl font-bold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+              disabled={!newDump.trim() || !canDump || isSubmitting}
+              className={`${
+                !canDump || isSubmitting ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'
+              } text-white py-3 px-8 rounded-xl font-bold transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg hover:shadow-xl`}
             >
-              <Plus className="w-5 h-5" />
-              <span>Dump It!</span>
+              {isSubmitting ? 'Dumping...' : canDump ? 'Dump It!' : 'Upgrade to keep dumping'}
             </button>
           </form>
         </div>
@@ -92,9 +126,14 @@ const Dashboard = () => {
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8 relative">
           <div className="absolute -top-3 -left-3 w-8 h-8 bg-green-300 rounded-full opacity-80"></div>
           
-          <h3 className="text-2xl font-bold text-gray-900 mb-6">Today's Brain Dumps</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">Recent Brain Dumps</h3>
           
-          {todaysDumps.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto"></div>
+              <p className="text-gray-600 mt-4">Loading your brain dumps...</p>
+            </div>
+          ) : todaysDumps.length === 0 ? (
             <div className="text-center py-12">
               <Brain className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500 text-lg">No brain dumps yet today. Start dumping!</p>
@@ -105,7 +144,7 @@ const Dashboard = () => {
                 <div key={dump.id} className="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200 hover:border-orange-200">
                   <div className="flex justify-between items-start mb-3">
                     <span className="text-sm font-medium text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
-                      {dump.timestamp}
+                      {formatTimestamp(dump.created_at)}
                     </span>
                   </div>
                   

@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Brain, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SignupScreen = () => {
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -11,6 +14,7 @@ const SignupScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -52,11 +56,24 @@ const SignupScreen = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      // Handle signup logic here
-      console.log('Signup attempt:', formData);
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const { error } = await signUp(formData.email, formData.password);
+      
+      if (error) {
+        setErrors({ auth: error.message });
+      } else {
+        // Successfully signed up - navigate to dashboard
+        navigate('/dashboard');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -171,13 +188,23 @@ const SignupScreen = () => {
               )}
             </div>
 
+            {/* Auth Error Display */}
+            {errors.auth && (
+              <div className="text-center">
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                  {errors.auth}
+                </p>
+              </div>
+            )}
+
             {/* Signup Button */}
             <button
               type="submit"
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
+              disabled={isLoading}
+              className={`w-full ${isLoading ? 'bg-orange-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'} text-white py-4 px-6 rounded-xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl`}
             >
-              <span>Create Account</span>
-              <ArrowRight className="w-5 h-5" />
+              <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
+              {!isLoading && <ArrowRight className="w-5 h-5" />}
             </button>
 
             {/* Benefits reminder */}
