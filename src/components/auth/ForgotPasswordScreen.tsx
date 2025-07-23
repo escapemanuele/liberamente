@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Brain, ArrowRight, Mail, CheckCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { useAuth } from '../../contexts/AuthContext';
 
 const ForgotPasswordScreen = () => {
@@ -61,7 +61,7 @@ const ForgotPasswordScreen = () => {
         <div className="max-w-md w-full space-y-8 relative z-10">
           {/* Header with Logo */}
           <div className="text-center">
-            <Link to="/" className="flex items-center justify-center space-x-3 mb-6">
+            <Link href="/" className="flex items-center justify-center space-x-3 mb-6">
               <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
                 <Brain className="w-8 h-8 text-white" />
               </div>
@@ -97,7 +97,7 @@ const ForgotPasswordScreen = () => {
               </button>
               
               <Link 
-                to="/login"
+                href="/login"
                 className="block w-full text-orange-500 hover:text-orange-600 font-bold py-3 transition-colors duration-200 hover:underline"
               >
                 Back to Login
@@ -120,7 +120,7 @@ const ForgotPasswordScreen = () => {
       <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Header with Logo */}
         <div className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-3 mb-6">
+          <Link href="/" className="flex items-center justify-center space-x-3 mb-6">
             <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
               <Brain className="w-8 h-8 text-white" />
             </div>
@@ -179,7 +179,7 @@ const ForgotPasswordScreen = () => {
           <p className="text-gray-600">
             Remember your password?{' '}
             <Link 
-              to="/login" 
+              href="/login" 
               className="text-orange-500 hover:text-orange-600 font-bold transition-colors duration-200 hover:underline"
             >
               Back to login

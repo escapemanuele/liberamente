@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase, Profile } from '../lib/supabase'
+import { supabase, Profile } from '../lib/supabaseClient'
 
 interface AuthContextType {
   user: User | null
@@ -18,6 +18,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (context === undefined) {
+    // During hot reloading, context might be temporarily undefined
+    // Return a loading state instead of throwing immediately
+    if (process.env.NODE_ENV === 'development') {
+      return {
+        user: null,
+        profile: null,
+        session: null,
+        loading: true,
+        signUp: async () => ({ error: null }),
+        signIn: async () => ({ error: null }),
+        signOut: async () => {},
+        resetPassword: async () => ({ error: null })
+      }
+    }
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
@@ -77,16 +91,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile)
-      }
-      
-      setLoading(false)
-    })
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('getSession error:', error)
+        }
+        const { session } = data
+        setSession(session)
+        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          console.log('session.user getSession', session.user)
+          fetchProfile(session.user.id).then(setProfile)
+        }
+        
+        setLoading(false)
+      })
+      .catch((err) => console.log('getSession promise rejection:', err))
 
     // Listen for auth changes
     const {
@@ -135,7 +156,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      const result = await supabase.auth.signOut()
+      if (result.error) {
+        console.error('signOut error:', result.error)
+      }
+    } catch (err) {
+      console.error('signOut exception:', err)
+    }
   }
 
   const resetPassword = async (email: string) => {

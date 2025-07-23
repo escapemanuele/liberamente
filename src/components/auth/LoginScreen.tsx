@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Brain, Eye, EyeOff, ArrowRight, KeyRound } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
 const LoginScreen: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { signIn } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -60,11 +61,11 @@ const LoginScreen: React.FC = () => {
         setErrors({ auth: error.message });
       } else {
         // Successfully logged in - navigate to dashboard
-        navigate('/dashboard');
+        router.push('/dashboard');
       }
-                  } finally {
-        setIsLoading(false);
-      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -78,7 +79,7 @@ const LoginScreen: React.FC = () => {
       <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Logo / Header */}
         <div className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-3 mb-6">
+          <Link href="/" className="flex items-center justify-center space-x-3 mb-6">
             <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
               <Brain className="w-8 h-8 text-white" />
             </div>
@@ -170,15 +171,15 @@ const LoginScreen: React.FC = () => {
         {/* Links */}
         <div className="text-center space-y-2">
           <Link
-            to="/forgot-password"
+            href="/forgot-password"
             className="text-orange-500 hover:text-orange-600 font-bold transition-colors duration-200 hover:underline"
           >
             Forgot your password?
           </Link>
           <p className="text-gray-600">
-            Don\'t have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link
-              to="/signup"
+              href="/signup"
               className="text-orange-500 hover:text-orange-600 font-bold transition-colors duration-200 hover:underline"
             >
               Sign up

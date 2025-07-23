@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Save } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 const EditBrainDump: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
   
   // Mock data - in real app, this would be fetched based on the ID
@@ -14,11 +15,11 @@ const EditBrainDump: React.FC = () => {
   const handleSave = () => {
     // In a real app, this would save to backend
     console.log('Saving brain dump:', brainDumpText);
-    navigate(`/brain-dump/${id}`);
+    router.push(`/brain-dump/${id}`);
   };
 
   const handleCancel = () => {
-    navigate(`/brain-dump/${id}`);
+    router.push(`/brain-dump/${id}`);
   };
 
   return (

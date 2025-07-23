@@ -1,76 +1,79 @@
-# Frontend Setup Instructions
+# Frontend Setup Guide
 
-## Environment Configuration
+## Prerequisites
 
-To connect the frontend to your Supabase backend, you need to set up environment variables.
+1. **Node.js** (v18 or higher)
+2. **Supabase CLI** (for local development)
 
-### 1. Create Environment File
+## Environment Setup
 
-Create a `.env.local` file in the root directory with the following content:
-
-```env
-# Supabase Configuration
-VITE_SUPABASE_URL=your_supabase_url_here
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-```
-
-### 2. Get Your Supabase Credentials
-
-#### For Local Development:
-1. Make sure Supabase is running locally: `supabase start`
-2. Run `supabase status` to get your credentials:
-   - **API URL**: Use this for `VITE_SUPABASE_URL`
-   - **anon key**: Use this for `VITE_SUPABASE_ANON_KEY`
-
-Example local setup:
-```env
-VITE_SUPABASE_URL=http://127.0.0.1:54321
-VITE_SUPABASE_ANON_KEY=your_local_anon_key_from_supabase_status
-```
-
-#### For Production:
-1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project
-3. Go to Settings → API
-4. Copy the values:
-   - **Project URL**: Use this for `VITE_SUPABASE_URL`
-   - **Project API Keys → anon/public**: Use this for `VITE_SUPABASE_ANON_KEY`
-
-### 3. Start the Development Server
+Create a `.env.local` file in the root directory. You can copy from `.env.example`:
 
 ```bash
-npm run dev
+cp .env.example .env.local
 ```
 
-## What's Been Implemented
+Then update the values:
 
-✅ **Authentication Integration**:
-- Login, signup, and forgot password forms are fully wired up
-- Auth state management with React Context
-- Protected routes that redirect to login when not authenticated
+### For Local Development (using Supabase local stack):
 
-✅ **Brain Dump Functionality**:
-- Create new brain dumps and save them to the database
-- Fetch and display existing brain dumps
-- Real-time quota checking for free users
-- Loading states and error handling
+1. Start Supabase locally: `supabase start`
+2. Run `supabase status` to get your local keys
+3. Update `.env.local` with the local values:
 
-✅ **UI Features**:
-- Header updates based on authentication state
-- Real user profile display (name/email from Supabase)
-- Logout functionality
-- Form validation and loading states
+```env
+# Local Supabase (from `supabase status`)
+SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_ANON_KEY=your_local_anon_key_from_supabase_status
+SUPABASE_SERVICE_ROLE_KEY=your_local_service_role_key_from_supabase_status
 
-## Testing the Integration
+# Add your OpenAI key for AI processing
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
-1. **Sign up for a new account** - Should create a profile in the profiles table
-2. **Log in** - Should redirect to dashboard and show user info in header
-3. **Create a brain dump** - Should save to database and trigger AI processing
-4. **Check quotas** - Free users should see quota restrictions
-5. **Log out** - Should clear auth state and redirect to home
+### For Production:
 
-## Next Steps
+Get these from your Supabase dashboard → Settings → API:
 
-The backend AI processing should automatically trigger when you create a brain dump. Check the Supabase logs to see the Edge Functions being called.
+```env
+# Production Supabase
+SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_production_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
 
-If you need to customize the AI prompts or add more functionality, check the Edge Functions in the `supabase/functions/` directory. 
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+## Key Differences
+
+- **Frontend** (`VITE_*`): Uses anon key (safe for client-side, limited permissions)
+- **Backend** (Edge Functions): Uses service role key (server-side only, full permissions)
+- Both use the same `SUPABASE_URL` but different keys for security
+
+## Installation & Running
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+```
+
+## Testing Authentication
+
+1. Visit http://localhost:5173
+2. Click "Get Started" 
+3. Sign up with a test email
+4. Login and test creating brain dumps
+
+The app will automatically:
+- Save brain dumps to database
+- Trigger AI processing 
+- Generate todos and insights
+- Enforce quota limits for free users 

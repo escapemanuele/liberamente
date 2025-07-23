@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Brain, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 
 const SignupScreen = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -70,7 +71,7 @@ const SignupScreen = () => {
         setErrors({ auth: error.message });
       } else {
         // Successfully signed up - navigate to dashboard
-        navigate('/dashboard');
+        router.push('/dashboard');
       }
     } finally {
       setIsLoading(false);
@@ -87,7 +88,7 @@ const SignupScreen = () => {
       <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Header */}
         <div className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-3 mb-6">
+          <Link href="/" className="flex items-center justify-center space-x-3 mb-6">
             <div className="bg-orange-500 p-3 rounded-xl shadow-lg">
               <Brain className="w-8 h-8 text-white" />
             </div>
@@ -220,7 +221,7 @@ const SignupScreen = () => {
           <p className="text-gray-600">
             Already have an account?{' '}
             <Link 
-              to="/login" 
+              href="/login" 
               className="text-orange-500 hover:text-orange-600 font-bold transition-colors duration-200 hover:underline"
             >
               Log in here

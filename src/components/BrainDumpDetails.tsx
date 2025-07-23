@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Clock, Lightbulb, CheckSquare, Square, Edit, Trash2, AlertTriangle } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useRouter, useParams } from 'next/navigation';
 
 interface ToDo {
   id: number;
@@ -9,7 +9,7 @@ interface ToDo {
 }
 
 const BrainDumpDetails: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { id } = useParams<{ id: string }>();
   const [editingTodo, setEditingTodo] = useState<number | null>(null);
   const [editText, setEditText] = useState('');
@@ -83,7 +83,7 @@ const BrainDumpDetails: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/dashboard')}
+                      onClick={() => router.push('/dashboard')}
           className="mb-6 bg-white hover:bg-orange-50 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3 shadow-lg hover:shadow-xl border border-gray-200"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -106,7 +106,7 @@ const BrainDumpDetails: React.FC = () => {
           </p>
 
           <button 
-            onClick={() => navigate(`/brain-dump/${id}/edit`)}
+            onClick={() => router.push(`/brain-dump/${id}/edit`)}
             className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg"
           >
             <Edit className="w-5 h-5" />

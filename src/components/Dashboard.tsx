@@ -1,12 +1,14 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { Brain, Plus, Eye, Edit, Trash2, Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { createBrainDump, fetchBrainDumps } from '../lib/braindumps';
-import { BrainDump } from '../lib/supabase';
+import { BrainDump } from '../lib/supabaseClient';
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, profile } = useAuth();
   const [newDump, setNewDump] = useState('');
   const [canDump, setCanDump] = useState(true);
@@ -67,11 +69,11 @@ const Dashboard = () => {
   };
 
   const handleEditDump = (id: string) => {
-    navigate(`/brain-dump/${id}/edit`);
+    router.push(`/brain-dump/${id}/edit`);
   };
 
   const handleViewDetails = (id: string) => {
-    navigate(`/brain-dump/${id}`);
+    router.push(`/brain-dump/${id}`);
   };
 
   const formatTimestamp = (dateString: string) => {
@@ -186,7 +188,7 @@ const Dashboard = () => {
         {/* Weekly Review Button */}
         <div className="text-center">
           <button 
-            onClick={() => navigate('/weekly-review')}
+            onClick={() => router.push('/weekly-review')}
             className="bg-gradient-to-r from-purple-500 to-orange-500 hover:from-purple-600 hover:to-orange-600 text-white py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-200 transform hover:scale-105 flex items-center space-x-3 shadow-2xl hover:shadow-3xl mx-auto"
           >
             <Calendar className="w-6 h-6" />

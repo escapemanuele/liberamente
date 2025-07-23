@@ -1,9 +1,9 @@
 import React from 'react';
 import { ArrowLeft, LogOut, User, Mail } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 
 const ProfileSettings: React.FC = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // Mocked user data – replace with real user context/auth hook
   const user = {
@@ -15,7 +15,7 @@ const ProfileSettings: React.FC = () => {
   const handleLogout = () => {
     // TODO: plug into auth logout logic
     console.log('User logged out');
-    navigate('/');
+    router.push('/');
   };
 
   return (
@@ -28,7 +28,7 @@ const ProfileSettings: React.FC = () => {
       <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
         {/* Back */}
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => router.back()}
           className="mb-8 bg-white hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-3 shadow-lg hover:shadow-xl border border-gray-200"
         >
           <ArrowLeft className="w-5 h-5" />

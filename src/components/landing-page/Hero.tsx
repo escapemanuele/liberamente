@@ -1,7 +1,16 @@
+"use client"
+
 import React from 'react';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 const Hero = () => {
+  const router = useRouter();
+
+  const handleStartDumping = () => {
+    router.push('/dashboard');
+  };
+
   return (
     <section className="bg-orange-50 py-20 relative overflow-hidden">
       {/* Decorative elements */}
@@ -30,7 +39,10 @@ const Hero = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-medium text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2">
+              <button 
+                onClick={handleStartDumping}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-medium text-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center space-x-2"
+              >
                 <span>Start Dumping</span>
                 <ArrowRight className="w-5 h-5" />
               </button>

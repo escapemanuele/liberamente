@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Calendar, Brain, CheckCircle, AlertTriangle, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 
 const WeeklyReview = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [showAllDumps, setShowAllDumps] = useState(false);
   
   // Mock data for the weekly review
@@ -36,7 +36,7 @@ const WeeklyReview = () => {
   ];
 
   const handleBackToDashboard = () => {
-    navigate('/dashboard');
+    router.push('/dashboard');
   };
 
   return (
