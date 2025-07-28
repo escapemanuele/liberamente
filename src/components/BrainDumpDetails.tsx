@@ -1,75 +1,200 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Clock, Lightbulb, CheckSquare, Square, Edit, Trash2, AlertTriangle } from 'lucide-react';
-import { useRouter, useParams } from 'next/navigation';
+'use client';
 
-interface ToDo {
-  id: number;
-  text: string;
-  completed: boolean;
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Clock, Lightbulb, CheckSquare, Square, Edit, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import { supabase, BrainDump, AIOutput, Todo } from '@/src/lib/supabaseClient';
+
+interface BrainDumpWithDetails extends BrainDump {
+  ai_outputs?: AIOutput[];
+  todos?: Todo[];
 }
 
 const BrainDumpDetails: React.FC = () => {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  const [editingTodo, setEditingTodo] = useState<number | null>(null);
+  const [brainDump, setBrainDump] = useState<BrainDumpWithDetails | null>(null);
+  const [insights, setInsights] = useState<string[]>([]);
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [worries, setWorries] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editingTodo, setEditingTodo] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
-  
-  // Mock data for the brain dump (in real app, this would be fetched based on the ID)
-  const brainDump = {
-    id: id || '1',
-    content: "Remember to follow up with the client about the project timeline. They mentioned wanting to see mockups by Friday and we need to align on the final deliverables. Also thinking about how we can improve our design process and maybe implement some new tools. Worried about the tight deadline though.",
-    timestamp: "Today, 10:30 AM",
-    date: "March 15, 2024"
+
+  useEffect(() => {
+    if (id) {
+      fetchBrainDumpData(id);
+    }
+  }, [id]);
+
+  const fetchBrainDumpData = async (brainDumpId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Fetch brain dump with AI outputs and todos
+      const { data: brainDumpData, error: brainDumpError } = await supabase
+        .from('brain_dumps')
+        .select(`
+          *,
+          ai_outputs(*),
+          todos(*)
+        `)
+        .eq('id', brainDumpId)
+        .single();
+
+      if (brainDumpError) {
+        throw brainDumpError;
+      }
+
+      if (!brainDumpData) {
+        setError('Brain dump not found');
+        return;
+      }
+
+      setBrainDump(brainDumpData);
+      setTodos(brainDumpData.todos || []);
+
+      // Process AI outputs into insights and worries
+      const aiOutputs = brainDumpData.ai_outputs || [];
+      const summaryOutputs = aiOutputs.filter((output: AIOutput) => output.kind === 'summary');
+      
+      // For now, we'll extract insights and worries from the summary content
+      // In a real implementation, you might have separate AI output types
+      const allInsights: string[] = [];
+      const allWorries: string[] = [];
+      
+      summaryOutputs.forEach((output: AIOutput) => {
+        try {
+          const parsed = JSON.parse(output.content);
+          if (parsed.insights) allInsights.push(...parsed.insights);
+          if (parsed.worries) allWorries.push(...parsed.worries);
+        } catch {
+          // If not JSON, treat as plain text insight
+          allInsights.push(output.content);
+        }
+      });
+
+      setInsights(allInsights);
+      setWorries(allWorries);
+    } catch (err) {
+      console.error('Error fetching brain dump:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load brain dump');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const [insights] = useState([
-    "Client communication is crucial for project success",
-    "Mockups are needed by Friday - this is a hard deadline",
-    "Process improvement opportunities exist in the design workflow",
-    "New tools could streamline the development process"
-  ]);
+  const handleTodoToggle = async (todoId: string) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo) return;
 
-  const [todos, setTodos] = useState<ToDo[]>([
-    { id: 1, text: "Follow up with client about project timeline", completed: false },
-    { id: 2, text: "Prepare mockups for Friday deadline", completed: false },
-    { id: 3, text: "Research new design tools", completed: true },
-    { id: 4, text: "Align on final deliverables with team", completed: false }
-  ]);
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ done: !todo.done })
+        .eq('id', todoId);
 
-  const [worries] = useState([
-    "The Friday deadline might be too tight",
-    "Client expectations may not align with our timeline",
-    "New tools implementation could slow down current projects",
-    "Team might be overwhelmed with additional tasks"
-  ]);
+      if (error) throw error;
 
-  const handleTodoToggle = (id: number) => {
-    setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+      setTodos(todos.map(t => 
+        t.id === todoId ? { ...t, done: !t.done } : t
+      ));
+    } catch (err) {
+      console.error('Error toggling todo:', err);
+    }
   };
 
-  const handleEditTodo = (id: number, text: string) => {
-    setEditingTodo(id);
+  const handleEditTodo = (todoId: string, text: string) => {
+    setEditingTodo(todoId);
     setEditText(text);
   };
 
-  const handleSaveEdit = (id: number) => {
-    setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, text: editText } : todo
-    ));
-    setEditingTodo(null);
-    setEditText('');
+  const handleSaveEdit = async (todoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ title: editText })
+        .eq('id', todoId);
+
+      if (error) throw error;
+
+      setTodos(todos.map(todo => 
+        todo.id === todoId ? { ...todo, title: editText } : todo
+      ));
+      setEditingTodo(null);
+      setEditText('');
+    } catch (err) {
+      console.error('Error updating todo:', err);
+    }
   };
 
-  const handleDeleteTodo = (id: number) => {
-    setTodos(todos.filter(todo => todo.id !== id));
+  const handleDeleteTodo = async (todoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .delete()
+        .eq('id', todoId);
+
+      if (error) throw error;
+
+      setTodos(todos.filter(todo => todo.id !== todoId));
+    } catch (err) {
+      console.error('Error deleting todo:', err);
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingTodo(null);
     setEditText('');
   };
+
+  const formatTimestamp = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    
+    if (isToday) {
+      return `Today, ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    }
+    return date.toLocaleDateString('en-US', { 
+      month: 'long', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Loading brain dump...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !brainDump) {
+    return (
+      <div className="min-h-screen bg-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-4 text-red-500" />
+          <p className="text-gray-600 mb-4">{error || 'Brain dump not found'}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-orange-50 relative overflow-hidden">
@@ -97,7 +222,7 @@ const BrainDumpDetails: React.FC = () => {
           <div className="flex items-center space-x-3 mb-4">
             <Clock className="w-5 h-5 text-orange-500" />
             <span className="text-sm font-medium text-orange-600 bg-orange-100 px-3 py-1 rounded-full">
-              {brainDump.timestamp}
+              {formatTimestamp(brainDump.created_at)}
             </span>
           </div>
           
@@ -106,7 +231,7 @@ const BrainDumpDetails: React.FC = () => {
           </p>
 
           <button 
-            onClick={() => router.push(`/brain-dump/${id}/edit`)}
+            onClick={() => router.push(`/braindump/${id}/edit`)}
             className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg"
           >
             <Edit className="w-5 h-5" />
@@ -150,7 +275,7 @@ const BrainDumpDetails: React.FC = () => {
                       onClick={() => handleTodoToggle(todo.id)}
                       className="text-green-500 hover:text-green-600 transition-colors duration-200"
                     >
-                      {todo.completed ? (
+                      {todo.done ? (
                         <CheckSquare className="w-5 h-5" />
                       ) : (
                         <Square className="w-5 h-5" />
@@ -180,8 +305,8 @@ const BrainDumpDetails: React.FC = () => {
                         </button>
                       </div>
                     ) : (
-                      <span className={`flex-1 ${todo.completed ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
-                        {todo.text}
+                      <span className={`flex-1 ${todo.done ? 'text-gray-500 line-through' : 'text-gray-700'}`}>
+                        {todo.title}
                       </span>
                     )}
                   </div>
@@ -189,7 +314,7 @@ const BrainDumpDetails: React.FC = () => {
                   {editingTodo !== todo.id && (
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => handleEditTodo(todo.id, todo.text)}
+                        onClick={() => handleEditTodo(todo.id, todo.title)}
                         className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-2 rounded-lg font-medium transition-colors duration-200 flex items-center space-x-1 text-sm"
                       >
                         <Edit className="w-4 h-4" />

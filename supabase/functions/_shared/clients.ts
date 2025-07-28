@@ -6,8 +6,11 @@ import OpenAI from 'npm:openai'
 import Stripe from 'npm:stripe'
 import { Resend } from 'npm:resend'
 
+console.log('Deno.env.get("VITE_SUPABASE_URL")', Deno.env.get('VITE_SUPABASE_URL'))
+console.log('Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
+
 export const supabase = createClient(
-  Deno.env.get('VITE_SUPABASE_URL')!,
+  Deno.env.get('NEXT_PUBLIC_SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
 

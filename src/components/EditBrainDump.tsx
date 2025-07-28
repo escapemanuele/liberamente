@@ -1,26 +1,111 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useParams } from 'next/navigation';
+'use client'
+
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Save, Loader2, AlertTriangle } from 'lucide-react';
+import { useRouter, useParams } from 'next/navigation';
+import { supabase, BrainDump } from '@/src/lib/supabaseClient';
 
 const EditBrainDump: React.FC = () => {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  
-  // Mock data - in real app, this would be fetched based on the ID
-  const [brainDumpText, setBrainDumpText] = useState(
-    "Remember to follow up with the client about the project timeline. They mentioned wanting to see mockups by Friday and we need to align on the final deliverables. Also thinking about how we can improve our design process and maybe implement some new tools. Worried about the tight deadline though."
-  );
+  const [brainDump, setBrainDump] = useState<BrainDump | null>(null);
+  const [brainDumpText, setBrainDumpText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSave = () => {
-    // In a real app, this would save to backend
-    console.log('Saving brain dump:', brainDumpText);
-    router.push(`/brain-dump/${id}`);
+  useEffect(() => {
+    if (id) {
+      fetchBrainDump(id);
+    }
+  }, [id]);
+
+  const fetchBrainDump = async (brainDumpId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: brainDumpData, error: brainDumpError } = await supabase
+        .from('brain_dumps')
+        .select('*')
+        .eq('id', brainDumpId)
+        .single();
+
+      if (brainDumpError) {
+        throw brainDumpError;
+      }
+
+      if (!brainDumpData) {
+        setError('Brain dump not found');
+        return;
+      }
+
+      setBrainDump(brainDumpData);
+      setBrainDumpText(brainDumpData.content);
+    } catch (err) {
+      console.error('Error fetching brain dump:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load brain dump');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!brainDump || !brainDumpText.trim()) return;
+
+    try {
+      setSaving(true);
+      setError(null);
+
+      const { error: updateError } = await supabase
+        .from('brain_dumps')
+        .update({ content: brainDumpText.trim() })
+        .eq('id', brainDump.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      router.push(`/braindump/${id}`);
+    } catch (err) {
+      console.error('Error saving brain dump:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save brain dump');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
-    router.push(`/brain-dump/${id}`);
+    router.push(`/braindump/${id}`);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-orange-500" />
+          <p className="text-gray-600">Loading brain dump...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !brainDump) {
+    return (
+      <div className="min-h-screen bg-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-8 h-8 mx-auto mb-4 text-red-500" />
+          <p className="text-gray-600 mb-4">{error || 'Brain dump not found'}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-medium transition-colors duration-200"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-orange-50 relative overflow-hidden">
@@ -47,6 +132,13 @@ const EditBrainDump: React.FC = () => {
           
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Edit Brain Dump</h1>
           
+          {/* Error Display */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
+
           {/* Textarea */}
           <div className="mb-8">
             <textarea
@@ -55,6 +147,7 @@ const EditBrainDump: React.FC = () => {
               className="w-full h-64 p-6 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-gray-700 text-lg leading-relaxed"
               placeholder="What's on your mind?"
               autoFocus
+              disabled={saving}
             />
           </div>
 
@@ -62,15 +155,21 @@ const EditBrainDump: React.FC = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={handleSave}
-              className="bg-orange-500 hover:bg-orange-600 text-white py-3 px-8 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 flex items-center space-x-2 shadow-lg"
+              disabled={saving || !brainDumpText.trim()}
+              className="bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 px-8 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100 flex items-center space-x-2 shadow-lg"
             >
-              <Save className="w-5 h-5" />
-              <span>Save Changes</span>
+              {saving ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Save className="w-5 h-5" />
+              )}
+              <span>{saving ? 'Saving...' : 'Save Changes'}</span>
             </button>
             
             <button
               onClick={handleCancel}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 px-8 rounded-xl font-medium transition-all duration-200"
+              disabled={saving}
+              className="bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-700 py-3 px-8 rounded-xl font-medium transition-all duration-200"
             >
               Cancel
             </button>

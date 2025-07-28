@@ -22,7 +22,7 @@ export const createBrainDump = async (data: CreateBrainDumpData): Promise<{ data
     if (!user) {
       return { data: null, error: new Error('User not authenticated') }
     }
-
+    
     const { data: brainDump, error: supabaseError } = await supabase
       .from('brain_dumps')
       .insert({
@@ -34,6 +34,7 @@ export const createBrainDump = async (data: CreateBrainDumpData): Promise<{ data
 
     return { data: brainDump, error: supabaseError }
   } catch (error) {
+    console.error('createBrainDump error:', error)
     return { data: null, error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }

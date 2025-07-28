@@ -21,9 +21,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to signup if not authenticated
   if (!user) {
-    redirect('/login');
+    redirect('/signup');
     return null;
   }
 

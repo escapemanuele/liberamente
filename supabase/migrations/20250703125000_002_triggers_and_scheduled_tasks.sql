@@ -11,7 +11,7 @@ language plpgsql
 security definer
 as $$
 declare
-  fn_url text := 'http://127.0.0.1:54321/functions/v1/process-dump';
+  fn_url text := 'https://erucivygwmspveixmlvc.supabase.co/functions/v1/process-dump';
 begin
   -- Fire-and-forget HTTP call to the Edge Function
   perform http_post(

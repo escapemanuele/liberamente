@@ -73,7 +73,7 @@ const Dashboard = () => {
   };
 
   const handleViewDetails = (id: string) => {
-    router.push(`/brain-dump/${id}`);
+    router.push(`/braindump/${id}`);
   };
 
   const formatTimestamp = (dateString: string) => {

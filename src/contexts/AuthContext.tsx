@@ -57,13 +57,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .single()
 
       if (error) {
-        console.error('Error fetching profile:', error)
+        console.error('Error fetching profile 1:', error)
         return null
       }
 
       return data as Profile
     } catch (error) {
-      console.error('Error fetching profile:', error)
+      console.error('Error fetching profile 2:', error)
       return null
     }
   }
@@ -82,10 +82,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         })
 
       if (error) {
-        console.error('Error creating profile:', error)
+        console.error('Error creating profile 1:', error)
       }
     } catch (error) {
-      console.error('Error creating profile:', error)
+      console.error('Error creating profile 2:', error)
     }
   }
 
